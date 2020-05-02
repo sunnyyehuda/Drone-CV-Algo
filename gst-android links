@@ -1,0 +1,125 @@
+
+Good descritpion of how to setup the gstreaemr androind environgment
+https://stackoverflow.com/questions/45044210/gstreamer-examples-in-android-studio
+
+
+
+The idea how to change the video buffer is here. end of the web page
+    http://gstreamer-devel.966125.n4.nabble.com/Simple-example-of-a-video-filter-td3252938.html
+
+working command:
+gst-launch-1.0 uridecodebin uri=https://www.freedesktop.org/software/gstreamer-sdk/data/media/sintel_trailer-480p.webm ! videoconvert ! agingtv ! videoconvert ! autovideosink
+
+gst-launch-1.0 videotestsrc ! videoconvert ! agingtv ! videoconvert ! autovideosink
+
+
+Next: complie aging.c
+
+git@gitlab.freedesktop.org:gstreamer/gst-plugins-base.git
+
+I follow insarctiont at:
+https://gitlab.freedesktop.org/gstreamer/gst-plugins-base
+
+    THE GIT LINK DIDN'T WORK. I COPY FROM WEB BROWSER THE LINK AND CLONE IT
+
+    meson build    ---> had to install flex.
+    ninja -C build
+        - compoiel about 5000 files
+
+fail for png file.. #error "Legacy libpng versions are not supported. Please use libpng 1.4+ (1.6+ recommended)
+Fail after 2700 files.
+Solution at: https://gitlab.freedesktop.org/gstreamer/gst-build/issues/57
+    Run
+    meson configure -Dgst-plugins-bad:iqa=disabled -Dgst-plugins-good:png=disabled build/
+
+need to install flex
+
+
+-----------------------------------------
+I delet build and repeat complie according to:
+https://gitlab.freedesktop.org/gstreamer/gst-build/issues/57
+    meson configure -Dgst-plugins-bad:iqa=disabled -Dgst-plugins-good:png=disabled build/✔
+    ninja -C build/✔
+
+after the I manage to stream view from URL with the command at the first line: gst-launch-1.0 uridecodebin .....
+
+NEXT - HOW TO RUN CHANGES.
+
+https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/developing.html?gi-language=c
+
+- need to complie gstreamer to android.
+For that use Celobro as describe on:
+1. https://gstreamer.freedesktop.org/documentation/installing/building-from-source-using-cerbero.html?gi-language=c
+2.http://gstreamer-devel.966125.n4.nabble.com/Building-GStreamer-SDK-from-latest-sources-for-ARM-Android-td4670784.html
+
+Commands:
+./cerbero-uninstalled -c config/cross-android.cbc bootstrap
+./cerbero-uninstalled -c config/cross-android-universal.cbc package gstreamer-1.0
+
+sudo ./cerbero-uninstalled -c  config/cross-android-x86.cbc buildone  gstreamer-1.0 
+sudo ./cerbero-uninstalled -c config/cross-android-x86.cbc wipe
+
+./cerbero-uninstalled buildone -c config/cross-android-universal.cbc package gst-plugins-good-1.0 - 1.17.0.1
+
+* fail to coplile libpng. Have to upgrade to ubuntu18
+* need meson 0.54. 
+	- download from https://github.com/mesonbuild/meson/releases/tag/0.54.0
+	- insall using: /Downloads/meson-0.54.0$ python3 -m pip install . (use . running from uncompress folder)
+
+
+NOTE: RUN CERBERO WIHT NDK R21.
+IN ANDROID TUTORIAL THEY ADVISE TO USE R18
+
+
+
+===============================================
+
+MOVE BACK TO MESON
+
+http://gstreamer-devel.966125.n4.nabble.com/Cerbero-GStreamer-recipes-are-now-built-with-Meson-td4688295.html
+
+30/4/2020
+https://gitlab.freedesktop.org/gstreamer/gst-build
+need to install libpng12.so:   https://askubuntu.com/questions/978294/how-to-fix-libpng12-so-0-cannot-open-shared-object-file-no-such-file-or-direc
+(need to do restart)
+
+
+ra@ubuntu:~/gst-build$ Ninja -C Builddir Devenv 
+
+
+
+
+
+=======================================================================================
+whatup description
+[24:29, 4/14/2020] Rani Attias:
+https://gitlab.freedesktop.org/gstreamer/gst-plugins-base
+[24:29, 4/14/2020] Rani Attias: יש הסבר. מה שחשוב זה:
+
+COMPILING FROM GIT - linux
+------------------
+
+You can build an uninstalled GStreamer from git for development or testing
+purposes without affecting your system installation.
+
+Get started with:
+
+    git clone https://gitlab.freedesktop.org/gstreamer/gst-build
+    meson build
+    ninja -C build
+    ninja -C build uninstalled
+
+For more information, see the `gst-build` module and its documentation:
+
+  https://gitlab.freedesktop.org/gstreamer/gst-build/blob/master/README.md
+[24:30, 4/14/2020] Rani Attias: אבל יש בעיה לקמפל. אז בפיתרון הוא פה:
+
+https://gitlab.freedesktop.org/gstreamer/gst-build/issues/57
+[24:30, 4/14/2020] סאני Drone TAU: אהה לא עבדתי עם זה
+[24:30, 4/14/2020] Rani Attias: בסוף הדף:
+
+Jai Prakash @jeyp4 · 5 months ago
+try this
+
+meson configure -Dgst-plugins-bad:iqa=disabled -Dgst-plugins-good:png=disabled build/✔
+==================================================================================================
