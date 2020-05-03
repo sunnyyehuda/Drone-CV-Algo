@@ -60,6 +60,11 @@ Cerbero Cross-complile Commands:
 ./cerbero-uninstalled -c config/cross-android-x86.cbc package gstreamer-1.0
 sudo ./cerbero-uninstalled -c  config/cross-android-x86.cbc buildone  gstreamer-1.0 
 sudo ./cerbero-uninstalled -c config/cross-android-x86.cbc wipe
+Recomplie the library with the change.
+----------------------------------------
+./cerbero-uninstalled -c config/cross-android-x86.cbc buildone  gst-plugins-good-1.0
+
+
 
 ./cerbero-uninstalled buildone -c config/cross-android-universal.cbc package gst-plugins-good-1.0 - 1.17.0.1
 
