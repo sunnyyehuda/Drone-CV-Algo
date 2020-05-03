@@ -47,15 +47,17 @@ NEXT - HOW TO RUN CHANGES.
 
 https://gstreamer.freedesktop.org/documentation/frequently-asked-questions/developing.html?gi-language=c
 
-- need to complie gstreamer to android.
+Using Cerbero from cross platform complicaiton:
+------------------------------------------------
 For that use Celobro as describe on:
 1. https://gstreamer.freedesktop.org/documentation/installing/building-from-source-using-cerbero.html?gi-language=c
 2.http://gstreamer-devel.966125.n4.nabble.com/Building-GStreamer-SDK-from-latest-sources-for-ARM-Android-td4670784.html
 
-Commands:
+Cerbero Cross-complile Commands:
+---------------------------------
 ./cerbero-uninstalled -c config/cross-android.cbc bootstrap
 ./cerbero-uninstalled -c config/cross-android-universal.cbc package gstreamer-1.0
-
+./cerbero-uninstalled -c config/cross-android-x86.cbc package gstreamer-1.0
 sudo ./cerbero-uninstalled -c  config/cross-android-x86.cbc buildone  gstreamer-1.0 
 sudo ./cerbero-uninstalled -c config/cross-android-x86.cbc wipe
 
