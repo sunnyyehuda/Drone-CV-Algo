@@ -1,4 +1,18 @@
 
+
+==============================================================
+Summry of all log file below:
+- Install cerbero envoronment
+	- base on guide on GStreamer site + Git 
+	- use ubunto 18.04
+	- compile for android_x86 only during develpment. 
+	- For deplyment complie also android_aarm64 (not tested yet)
+- change the code in the node
+	- Recomplie only the library by using the 'buildone' command as shown blow
+- Copy the build/android_x86 to android studio environment (gstreamer/x86)
+
+
+==============================================================
 Good descritpion of how to setup the gstreaemr androind environgment
 https://stackoverflow.com/questions/45044210/gstreamer-examples-in-android-studio
 
