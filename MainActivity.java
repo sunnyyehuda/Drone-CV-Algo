@@ -1,9 +1,11 @@
 package com.example.nativetest;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -21,6 +23,15 @@ import com.arthenica.mobileffmpeg.FFmpeg;
 
 import org.opencv.android.OpenCVLoader;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+
 import static java.lang.System.loadLibrary;
 
 
@@ -32,10 +43,10 @@ public class MainActivity extends AppCompatActivity
     public static final int REQUEST_EXTERNAL_STORAGE = 1;
     public static String[] PERMISSIONS_ALL =
             {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA
-    };
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.CAMERA
+            };
 
     //#########################//
     // loading native library  //
@@ -54,6 +65,8 @@ public class MainActivity extends AppCompatActivity
     private SurfaceHolder sh;
     private SurfaceView sfv;
     private MediaPlayer player;
+    InetAddress receiverAddress;
+    DatagramSocket datagramSocket;
 
 
     @Override
@@ -65,9 +78,9 @@ public class MainActivity extends AppCompatActivity
         //###############################//
         // setting the fields of tha app //
         //###############################//
-        sfv = (SurfaceView)findViewById(R.id.big_screen);
+        sfv = (SurfaceView)findViewById(R.id.surfaceView);
         TextView tv = findViewById(R.id.sample_text);
-        TextView textView=(TextView) findViewById(R.id.sample_text);
+        TextView textView=(TextView) findViewById(R.id.sample_text2);
         ImageView imv=(ImageView) findViewById(R.id.imageView);
         player = new MediaPlayer();
 
@@ -99,45 +112,37 @@ public class MainActivity extends AppCompatActivity
         Toast.makeText(getApplicationContext(), "ffmpeg version: "+Config.getFFmpegVersion(), Toast.LENGTH_LONG).show();
         String pipe = Config.registerNewFFmpegPipe(getApplicationContext());
 
-        int rc = FFmpeg.execute("-rtsp_transport udp -i rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov -c:va copy out.mov");
-
-        if (rc == RETURN_CODE_SUCCESS) {
-            Toast.makeText(getApplicationContext(), "ffmpeg succeed:", Toast.LENGTH_LONG).show();
-        } else {
-            Toast.makeText(getApplicationContext(), "ffmpeg failed:", Toast.LENGTH_LONG).show();
+        //###############################################//
+        // making socket for initialize the tello        //
+        //###############################################//
+        String addressString = "192.168.10.1";
+        try {
+            receiverAddress = InetAddress.getByName(addressString);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
         }
+        try {
+            datagramSocket = new DatagramSocket(8889);
+        } catch (SocketException e1) {
+            e1.printStackTrace();
+        }
+
+        new TelloCommand().execute("command");
+        new TelloCommand().execute("streamon");
+        new TelloCommand().execute("takeoff");
+        new TelloCommand().execute("up 100");
+        new TelloCommand().execute("forward 200");
+        new Grabber().execute("/storage/emulated/0/Movies/drones/%03d.jpg");
+        new TelloCommand().execute("cw 180");
+        new TelloCommand().execute("forward 200");
+        new TelloCommand().execute("land");
+        new TelloCommand().execute("streamoff");
+
 
 
         FFmpeg.cancel();
         Config.closeFFmpegPipe(pipe);
 
-        //ffmpeg = FFmpeg.getInstance(getApplicationContext());
-        //String[] cmd = "-rtsp_transport udp -i rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov -r 10 -f image2 /storage/emulated/0/Pictures/img%03d.png".split(" ");
-
-        //ffmpeg.execute(cmd, new ExecuteBinaryResponseHandler() {
-
-            //@Override
-            //public void onStart() {}
-
-            //@Override
-            //public void onProgress(String message) {
-                //Toast.makeText(getApplicationContext(), "ffmpeg ongoing: "+message, Toast.LENGTH_SHORT).show();
-            //}
-
-            //@Override
-            //public void onFailure(String message) {
-                //Toast.makeText(getApplicationContext(), "ffmpeg failed:"+message, Toast.LENGTH_LONG).show();
-            //}
-
-            //@Override
-           // public void onSuccess(String message) {
-                //T//oast.makeText(getApplicationContext(), "ffmpeg succeed", Toast.LENGTH_SHORT).show();
-         //   }
-
-           // @Override
-          //  public void onFinish() {}
-
-      //  });
         try {
             player.setDataSource(this, Uri.parse(videoRtspUrl));
             sh =sfv.getHolder();
@@ -173,6 +178,53 @@ public class MainActivity extends AppCompatActivity
         } else {
             Log.d(TAG, "OPENCV DID NOT LOAD");
 
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class Grabber extends AsyncTask<String, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(String... params) {
+            int rc = FFmpeg.execute("-i udp://192.168.10.1:11111 -r 6 -f image2 "+params[0]);
+
+            if (rc == RETURN_CODE_SUCCESS) {
+                Toast.makeText(getApplicationContext(), "ffmpeg succeed:", Toast.LENGTH_LONG).show();
+                return true;
+            } else {
+                Toast.makeText(getApplicationContext(), "ffmpeg failed:", Toast.LENGTH_LONG).show();
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            super.onPostExecute(result);
+        }
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class TelloCommand extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... params) {
+
+            byte[] sendBuffer = params[0].getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            byte[] receiveBuffer = new byte[2048];
+            DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
+            DatagramPacket sendPacket = new DatagramPacket(
+                    sendBuffer, sendBuffer.length, receiverAddress, 8889);
+            try {
+                datagramSocket.send(sendPacket);
+                datagramSocket.receive(receivePacket);
+                return new String(receiveBuffer, 0, receivePacket.getLength());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
         }
     }
 
