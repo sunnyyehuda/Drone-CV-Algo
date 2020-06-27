@@ -1,7 +1,7 @@
 # Drones CV Algo
 This repository is for app developers in Android Studio environment. The app receive RTSP stream and casting opencv and native custom functions on the frames.
 
-# Setup the native libraries
+# OPTION 1: Setup the native libraries
 
 Step 1: Download OpenCV Android Library Go to the OpenCV Android Sourceforge page and download the latest OpenCV Android library and extract it to the android folder.
 
@@ -32,6 +32,14 @@ E.G: <uses-permission android:name="android.permission.CAMERA"/>
 # Usage
 One can use the ready to use function in the java scope via import, or implement a cpp native code in the native-lib scope.
 
+# OPTION 2: import JAVACV to GRADLE
+'''
+    implementation 'org.bytedeco:javacv:+'
+    implementation 'org.bytedeco.javacpp-presets:opencv:3.0.0-1.1:android-x86'
+    implementation 'org.bytedeco.javacpp-presets:ffmpeg:2.8.1-1.1:android-x86'
+    implementation 'org.bytedeco.javacpp-presets:opencv:3.0.0-1.1:android-arm'
+    implementation 'org.bytedeco.javacpp-presets:ffmpeg:2.8.1-1.1:android-arm'
+'''
 # Add FFMPEG-Nobile to GRADLE
 add the following line in the dependancy list:
 implementation 'com.arthenica:mobile-ffmpeg-full-gpl:4.3.1.LTS'
